@@ -48,7 +48,7 @@ class TestWorkerBee < Test::Unit::TestCase
       work :test do
         puts "** test"
       end
-      assert_equal "** test", WorkerBee.test
     end
+    assert_equal "** test", WorkerBee.test
   end
 end
