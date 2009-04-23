@@ -12,15 +12,34 @@ Week3 assignment for Ruby Advanced class, WorkerBee DSl that does kinda sorta wh
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+  require 'worker_bee'
+
+  WorkerBee.recipe do
+    work :bread, :clean do
+      puts "** bread"
+    end
+
+    work :clean do
+      puts "** cleaning!"
+    end
+  end
+  
+  WorkerBee.run :bread
+  
+  Should output:
+  
+  running bread
+    running clean
+  ** cleaning!
+  ** bread
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* None as of now
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* None as of now
 
 == LICENSE:
 
