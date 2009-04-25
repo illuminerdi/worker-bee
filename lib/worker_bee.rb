@@ -23,6 +23,11 @@ class WorkerBee
     instance_eval(&block)
   end
   
+  def self.run(symbol)
+    output = self.send(:"#{symbol}")
+    output.each do |line| old_puts line; end
+  end
+  
   def self.work(*symbols, &block)
     symbol = symbols.shift
     tasks << symbol
