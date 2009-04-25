@@ -2,11 +2,27 @@
 
 class WorkerBee
   VERSION = '1.0.0'
+
+  class << self; attr_accessor :tasks; end
   
-  def self.recipe(&block)
+  def initialize
   end
   
-  def self.work(symbol, *args, &block)
-    
+  def self.recipe(&block)
+    @tasks = []
+    instance_eval(&block)
+  end
+  
+  def self.work(*symbols, &block)
+    symbol = symbols.shift
+    tasks << symbol
+    foo = block.class || nil
+
+    self.class_eval %{
+      def self.#{symbol}(*deps)
+        puts "Running #{symbol}"
+        completed_msg = ""
+      end
+    }
   end
 end

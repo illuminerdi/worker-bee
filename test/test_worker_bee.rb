@@ -9,27 +9,27 @@ require 'worker_bee'
 class TestWorkerBee < Test::Unit::TestCase
   
   def setup
-    WorkerBee.recipe do
-      work :sammich, :meat, :bread do
-        puts "** sammich!"
-      end
-
-      work :meat, :clean do
-        puts "** meat"
-      end
-
-      work :bread, :clean do
-        puts "** bread"
-      end
-
-      work :clean do
-        puts "** cleaning!"
-      end
-    end
+    load 'sammich.wb'
   end
   
   def test_has_recipe
     assert WorkerBee.respond_to?(:recipe)
+  end
+  
+  def test_recipe_with_no_work_has_no_tasks
+    WorkerBee.recipe do
+    end
+    
+    assert WorkerBee.tasks.empty?
+  end
+  
+  def test_recipe_with_one_work_has_one_task
+    WorkerBee.recipe do
+      work :test
+    end
+    
+    assert_equal 1, WorkerBee.tasks.size
+    assert_equal "test", WorkerBee.tasks.first.to_s
   end
   
   def test_has_work
@@ -41,14 +41,5 @@ class TestWorkerBee < Test::Unit::TestCase
       work :test
     end
     assert WorkerBee.respond_to?(:test)
-  end
-  
-  def test_recipe_registers_new_work_with_no_dependencies_and_it_returns_the_block
-    WorkerBee.recipe do
-      work :test do
-        puts "** test"
-      end
-    end
-    assert_equal "** test", WorkerBee.test
   end
 end
