@@ -4,8 +4,8 @@ require 'pp'
 
 module Kernel
   alias :old_puts :puts
-  def puts(string)
-    string
+  def puts(*strings)
+    strings.join("\n")
   end
 end
 
