@@ -16,10 +16,6 @@ module WorkerBee
       @already_done = true
       @block.call
     end
-    
-    def already_done?
-      @already_done
-    end
   end
   
   @tasks = {}
@@ -39,7 +35,7 @@ module WorkerBee
   
   def self.run(task, indent=0)
     this_task = task.to_sym
-      if @tasks[this_task].already_done?
+      if @tasks[this_task].already_done
         puts "#{'  ' * indent}not running #{this_task} - already met dependency"
       else
         puts "#{'  ' * indent}Running #{task}"
