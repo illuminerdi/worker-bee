@@ -67,6 +67,12 @@ class TestWorkerBee < Test::Unit::TestCase
     assert_equal "Running test\n** testing!", actual.string.chomp
   end
   
+  def test_running_a_work_task_that_does_not_exist_throws_exception
+    assert_raise(ArgumentError) do
+      WorkerBee.run(:foo)
+    end
+  end
+  
   def test_recipe_with_two_works_one_dependent_on_the_other
     WorkerBee.recipe do
       work :first_test, :second_test do

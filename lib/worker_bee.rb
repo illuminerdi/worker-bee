@@ -22,27 +22,28 @@ module WorkerBee
   def self.tasks; @tasks; end
   
   def self.recipe(&block)
-    raise(ArgumentError, "WorkerBee#recipe expects a block") unless block_given?
+    raise(ArgumentError, "WorkerBee#recipe: expects a block") unless block_given?
     @tasks = {}
     module_eval(&block)
   end
   
   def self.work(*symbols, &block)
-    raise(ArgumentError, "WorkerBee#work expects a block") unless block_given?
+    raise(ArgumentError, "WorkerBee#work: expects a block") unless block_given?
     task_name = symbols.shift
     @tasks[task_name] = WorkerBee::Work.new symbols, block
   end
   
   def self.run(task, indent=0)
     this_task = task.to_sym
-      if @tasks[this_task].already_done
-        puts "#{'  ' * indent}not running #{this_task} - already met dependency"
-      else
-        puts "#{'  ' * indent}Running #{task}"
-        @tasks[this_task].dependents.each do |dependent|
-          run(dependent, indent+1)
-        end
-        @tasks[this_task].run        
+    raise(ArgumentError, "WorkerBee#run: work task not found") unless @tasks.key?(this_task)
+    if @tasks[this_task].already_done
+      puts "#{'  ' * indent}not running #{this_task} - already met dependency"
+    else
+      puts "#{'  ' * indent}Running #{task}"
+      @tasks[this_task].dependents.each do |dependent|
+        run(dependent, indent+1)
       end
+      @tasks[this_task].run        
+    end
   end
 end
