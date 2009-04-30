@@ -1,55 +1,52 @@
 #!/usr/bin/env ruby -w
 
-require 'pp'
-
-module Kernel
-  alias :old_puts :puts
-  def puts(*strings)
-    strings.join("\n")
-  end
-end
-
-class WorkerBee
-  VERSION = '0.0.2'
-
-  class << self; attr_accessor :tasks, :already_ran; end
+module WorkerBee
+  VERSION = '0.0.3'
   
-  def initialize
+  class Work
+    attr_accessor :block, :dependents, :already_done
+    
+    def initialize dependents, block
+      @block = block
+      @dependents = dependents
+      @already_done = false
+    end
+    
+    def run
+      @already_done = true
+      @block.call
+    end
+    
+    def already_done?
+      @already_done
+    end
   end
+  
+  @tasks = {}
+  def self.tasks; @tasks; end
   
   def self.recipe(&block)
-    @tasks = []
-    @already_ran = []
-    instance_eval(&block)
-  end
-  
-  def self.run(symbol)
-    output = self.send(:"#{symbol}")
-    output.each do |line| old_puts line; end
+    raise(ArgumentError, "WorkerBee#recipe expects a block") unless block_given?
+    @tasks = {}
+    module_eval(&block)
   end
   
   def self.work(*symbols, &block)
-    symbol = symbols.shift
-    tasks << symbol
-    completed_msg = (yield if block_given?) || ""
-    dep_calls = ""
-    symbols.each {|sym|
-      dep_calls += %{msg = self.#{sym}(msg, indent+2)\n}
-    }
-    new_def = %{
-      def self.#{symbol}(msg=[], indent=0)
-        indenting = ""
-        indent.times do indenting = "\#\{indenting\} "; end
-        if already_ran.include?("#{symbol}")
-          msg << "\#\{indenting\}not running #{symbol} - already met dependency"
-        else
-          msg << "\#\{indenting\}Running #{symbol}"
-          #{dep_calls}
-          already_ran << "#{symbol}" unless already_ran.include?("#{symbol}")
-          msg << "#{completed_msg}"
+    raise(ArgumentError, "WorkerBee#work expects a block") unless block_given?
+    task_name = symbols.shift
+    @tasks[task_name] = WorkerBee::Work.new symbols, block
+  end
+  
+  def self.run(task, indent=0)
+    this_task = task.to_sym
+      if @tasks[this_task].already_done?
+        puts "#{'  ' * indent}not running #{this_task} - already met dependency"
+      else
+        puts "#{'  ' * indent}Running #{task}"
+        @tasks[this_task].dependents.each do |dependent|
+          run(dependent, indent+1)
         end
+        @tasks[this_task].run        
       end
-    }
-    self.class_eval new_def
   end
 end

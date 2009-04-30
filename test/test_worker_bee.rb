@@ -2,9 +2,17 @@
 
 require 'test/unit'
 require 'worker_bee'
+require 'stringio'
 
-
-
+module Kernel
+  def capture_stdout
+    out = StringIO.new
+    $stdout = out
+    yield
+    $stdout = STDOUT
+    return out
+  end
+end
 
 class TestWorkerBee < Test::Unit::TestCase
   
@@ -15,60 +23,76 @@ class TestWorkerBee < Test::Unit::TestCase
   def test_has_recipe
     assert WorkerBee.respond_to?(:recipe)
   end
-  
-  def test_recipe_with_no_work_has_no_tasks
-    WorkerBee.recipe do
-    end
-    
-    assert WorkerBee.tasks.empty?
-  end
-  
+
   def test_has_work
     assert WorkerBee.respond_to?(:work)
+  end
+  
+  def test_recipe_with_no_work_throws_error
+    assert_raise ArgumentError do
+      WorkerBee.recipe
+    end
+  end
+  
+  def test_recipe_with_work_with_no_block_throws_error
+    assert_raise ArgumentError do
+      WorkerBee.recipe do
+        work :test
+      end
+    end
   end
     
   def test_recipe_with_one_work_has_one_task
     WorkerBee.recipe do
-      work :test
+      work :test do
+        puts "test work!"
+      end
     end
     
     assert_equal 1, WorkerBee.tasks.size
-    assert_equal "test", WorkerBee.tasks.first.to_s
-  end
-
-  def test_recipe_registers_new_work
-    WorkerBee.recipe do
-      work :test
-    end
-    assert WorkerBee.respond_to?(:test)
+    assert_equal "test", WorkerBee.tasks.keys.first.to_s
   end
   
-  def test_recipe_registers_new_work_and_it_lets_us_know_its_running
+  def test_recipe_registers_new_work_and_it_runs_properly
     WorkerBee.recipe do
       work :test do
         puts "** testing!"
       end
     end
     
-    assert_equal ["Running test","** testing!"], WorkerBee.test
+    actual = capture_stdout do
+      WorkerBee.run(:test)
+    end
+    
+    assert_equal "Running test\n** testing!", actual.string.chomp
   end
   
   def test_recipe_with_two_works_one_dependent_on_the_other
     WorkerBee.recipe do
       work :first_test, :second_test do
-        puts "** testing last!"
+        puts "** first test should be last!"
       end
-      
       work :second_test do
-        puts "** testing first!"
+        puts "** second test should be first!"
       end
     end
-    expected = ["Running first_test", "  Running second_test", "** testing first!", "** testing last!"]
-    assert_equal expected, WorkerBee.first_test
+    
+    actual = capture_stdout do
+      WorkerBee.run(:first_test)
+    end
+    
+    expected = [
+      "Running first_test", 
+      "  Running second_test", 
+      "** second test should be first!", 
+      "** first test should be last!"]
+    assert_equal expected.join("\n"), actual.string.chomp
   end
   
   def test_recipe_with_work_dependent_twice_only_runs_once
-    actual = WorkerBee.sammich
-    assert actual.include?("    not running clean - already met dependency")
+    actual = capture_stdout do
+      WorkerBee.run(:sammich)
+    end
+    assert actual.string.include?("    not running clean - already met dependency")
   end
 end
