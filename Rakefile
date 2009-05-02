@@ -6,7 +6,7 @@ require './lib/worker_bee.rb'
 
 Hoe.new('WorkerBee', WorkerBee::VERSION) do |p|
   # p.rubyforge_name = 'WorkerBeex' # if different than lowercase project name
-  # p.developer('Joshua Clingenpeel', 'joshua.clingenpeel@gmail.com')
+  p.developer('Joshua Clingenpeel', 'joshua.clingenpeel@gmail.com')
 end
 
 # vim: syntax=Ruby
