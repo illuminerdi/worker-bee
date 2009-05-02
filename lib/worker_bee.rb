@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby -w
 
+require 'thread'
+
 module WorkerBee
   VERSION = '0.0.3'
   
@@ -34,16 +36,19 @@ module WorkerBee
   end
   
   def self.run(task, indent=0)
+    mutex = Mutex.new
     this_task = task.to_sym
     raise(ArgumentError, "WorkerBee#run: work task not found") unless @tasks.key?(this_task)
     if @tasks[this_task].already_done
       puts "#{'  ' * indent}not running #{this_task} - already met dependency"
     else
       puts "#{'  ' * indent}Running #{task}"
-      @tasks[this_task].dependents.each do |dependent|
-        run(dependent, indent+1)
-      end
-      @tasks[this_task].run        
+      @tasks[this_task].dependents.map {|dependent|
+        Thread.new do
+          mutex.synchronize {run(dependent, indent+1)}
+        end
+      }.each {|x| x.join}
+      @tasks[this_task].run
     end
   end
 end
