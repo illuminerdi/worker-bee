@@ -3,7 +3,7 @@
 require 'thread'
 
 module WorkerBee
-  VERSION = '0.0.3'
+  VERSION = '0.0.4'
 
   class Work
     attr_accessor :block, :dependents, :already_done
